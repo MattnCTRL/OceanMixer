@@ -1,0 +1,27 @@
+appId: com.oceanmixer.app
+productName: OceanMixer
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+# FFmpeg/FFprobe ship as native binaries inside node_modules; they must be
+# unpacked from the asar archive so they can be spawned at runtime.
+asarUnpack:
+  - node_modules/ffmpeg-static/**
+  - node_modules/ffprobe-static/**
+mac:
+  category: public.app-category.video
+  target:
+    - dmg
+    - zip
+  hardenedRuntime: true
+  gatekeeperAssert: false
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: AudioVideo
