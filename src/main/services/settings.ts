@@ -11,7 +11,7 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { join, isAbsolute } from 'node:path'
 import Store from 'electron-store'
 import { IPC, DEFAULT_SETTINGS } from '@shared/ipc'
-import type { AppSettings, AppPaths } from '@shared/ipc'
+import type { AppSettings, AppPaths, AIAuthMode } from '@shared/ipc'
 
 /* --------------------------------------------------------------------- Store */
 
@@ -66,6 +66,16 @@ export function setAnthropicKey(key: string): void {
   } else {
     store().delete('anthropicApiKey')
   }
+}
+
+/** Which credential the Director should use (apiKey vs Anthropic account login). */
+export function getAuthMode(): AIAuthMode {
+  const m = store().get('authMode')
+  return m === 'oauth' ? 'oauth' : 'apiKey'
+}
+
+export function setAuthMode(mode: AIAuthMode): void {
+  store().set('authMode', mode)
 }
 
 /**

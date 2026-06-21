@@ -21,7 +21,47 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { AIChatRequest, AIChatResponse, AIMessage } from '@shared/ipc'
 import type { EditOp } from '@shared/ai-ops'
 import { summarizeProject } from '@shared/project-utils'
-import { getAnthropicKey, getSettings } from '../settings'
+import { getAnthropicKey, getAuthMode, getSettings } from '../settings'
+import { antAccessToken, OAUTH_BETA_HEADER } from './anthropicAuth'
+
+/**
+ * Decide which credential to authenticate with. Honors the user's chosen
+ * authMode but falls back to whatever is actually available, so the Director
+ * works as long as either an API key or an account login is present.
+ */
+type Credential =
+  | { kind: 'apiKey'; apiKey: string }
+  | { kind: 'oauth'; token: string }
+  | { kind: 'none' }
+
+async function resolveCredential(): Promise<Credential> {
+  const mode = getAuthMode()
+  const key = getAnthropicKey()
+  if (mode === 'oauth') {
+    const token = await antAccessToken()
+    if (token) return { kind: 'oauth', token }
+    if (key) return { kind: 'apiKey', apiKey: key }
+    return { kind: 'none' }
+  }
+  if (key) return { kind: 'apiKey', apiKey: key }
+  const token = await antAccessToken()
+  if (token) return { kind: 'oauth', token }
+  return { kind: 'none' }
+}
+
+/** Build an Anthropic client for the resolved credential. */
+function makeClient(cred: Exclude<Credential, { kind: 'none' }>): Anthropic {
+  if (cred.kind === 'oauth') {
+    return new Anthropic({
+      // OAuth bearer auth: Authorization: Bearer + the oauth beta header.
+      // apiKey: null prevents the SDK from also sending a key from the env.
+      apiKey: null,
+      authToken: cred.token,
+      defaultHeaders: { 'anthropic-beta': OAUTH_BETA_HEADER }
+    })
+  }
+  return new Anthropic({ apiKey: cred.apiKey })
+}
 
 const DEFAULT_MODEL = 'claude-opus-4-8'
 const MAX_TOKENS = 8000
@@ -174,20 +214,20 @@ function toConversation(messages: AIMessage[]): ConvMessage[] {
 /* ---------------------------------------------------------------- the call */
 
 export async function runDirector(req: AIChatRequest): Promise<AIChatResponse> {
-  const apiKey = getAnthropicKey()
-  if (!apiKey) {
+  const cred = await resolveCredential()
+  if (cred.kind === 'none') {
     return {
       reply:
-        'No Anthropic API key set. Add one in Settings to use the Creative Director.',
+        'No Anthropic credentials. Add an API key or log in with your Anthropic account in Settings to use the Creative Director.',
       ops: [],
-      error: 'no-key'
+      error: 'no-auth'
     }
   }
 
   const model = getSettings().aiModel || DEFAULT_MODEL
 
   try {
-    const client = new Anthropic({ apiKey })
+    const client = makeClient(cred)
     const system = buildSystemPrompt(req)
 
     const conversation: ConvMessage[] = toConversation(req.messages)

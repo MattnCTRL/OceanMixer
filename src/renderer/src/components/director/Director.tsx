@@ -171,7 +171,7 @@ export function Director(): JSX.Element {
     textareaRef.current?.focus()
   }, [])
 
-  const hasKey = status?.hasKey ?? false
+  const ready = status?.ready ?? false
   const isEmpty = entries.length === 0
 
   return (
@@ -187,14 +187,14 @@ export function Director(): JSX.Element {
         ) : null}
       </div>
 
-      {/* No-key notice */}
-      {status && !hasKey ? (
+      {/* Not-connected notice */}
+      {status && !ready ? (
         <div className="flex items-start gap-2 border-b border-ocean-border bg-ocean-panel-2 px-3 py-2 text-xs text-ocean-muted">
           <KeyRound size={14} className="mt-0.5 shrink-0 text-ocean-accent-2" />
           <span>
-            No API key configured. Open <span className="text-ocean-text">Settings</span> from the
-            top bar to add your Anthropic key. You can still type, but the Director can&apos;t make
-            edits yet.
+            Not connected. Open <span className="text-ocean-text">Settings</span> from the top bar to
+            sign in with your Anthropic account or add an API key. You can still type, but the
+            Director can&apos;t make edits yet.
           </span>
         </div>
       ) : null}

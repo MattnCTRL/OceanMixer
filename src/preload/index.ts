@@ -41,7 +41,9 @@ const api: OceanMixerApi = {
       return () => ipcRenderer.removeListener(IPC.aiStream, listener)
     },
     status: () => ipcRenderer.invoke(IPC.aiStatus),
-    setKey: (provider, key) => ipcRenderer.invoke(IPC.aiSetKey, provider, key)
+    setKey: (provider, key) => ipcRenderer.invoke(IPC.aiSetKey, provider, key),
+    login: () => ipcRenderer.invoke(IPC.aiLogin),
+    logout: () => ipcRenderer.invoke(IPC.aiLogout)
   },
   settings: {
     get: (key) => ipcRenderer.invoke(IPC.settingsGet, key),

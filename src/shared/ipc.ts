@@ -34,6 +34,8 @@ export const IPC = {
   aiStream: 'ai:stream', // main -> renderer (push)
   aiStatus: 'ai:status',
   aiSetKey: 'ai:setKey',
+  aiLogin: 'ai:login',
+  aiLogout: 'ai:logout',
 
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
@@ -116,10 +118,24 @@ export interface AIStreamEvent {
   error?: string
 }
 
+/** How the Director authenticates: a pasted API key, or an Anthropic account login. */
+export type AIAuthMode = 'apiKey' | 'oauth'
+
 export interface AIStatus {
   provider: AIProvider
-  hasKey: boolean
   model: string
+  /** which credential the Director will use */
+  authMode: AIAuthMode
+  /** an API key is stored locally */
+  hasKey: boolean
+  /** an Anthropic account (OAuth) session is active and usable */
+  loggedIn: boolean
+  /** the `ant` CLI (used for account login) is installed and resolvable */
+  cliAvailable: boolean
+  /** account/workspace label when logged in (best effort) */
+  account?: string
+  /** whether the Director can make calls right now under the active authMode */
+  ready: boolean
 }
 
 /* ----------------------------------------------------------------- Projects */
@@ -134,6 +150,8 @@ export interface RecentProject {
 
 export interface AppSettings {
   anthropicApiKey?: string
+  /** preferred Director auth: pasted API key, or Anthropic account login */
+  authMode?: AIAuthMode
   aiModel: string
   defaultExportDir?: string
   theme: 'dark' | 'light'
@@ -143,6 +161,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   aiModel: 'claude-opus-4-8',
+  authMode: 'apiKey',
   theme: 'dark'
 }
 
@@ -183,6 +202,10 @@ export interface OceanMixerApi {
     onStream(cb: (e: AIStreamEvent) => void): () => void
     status(): Promise<AIStatus>
     setKey(provider: AIProvider, key: string): Promise<AIStatus>
+    /** start an Anthropic account login (opens a browser via the `ant` CLI) */
+    login(): Promise<AIStatus>
+    /** sign out of the Anthropic account session */
+    logout(): Promise<AIStatus>
   }
   settings: {
     get<K extends keyof AppSettings>(key: K): Promise<AppSettings[K]>
