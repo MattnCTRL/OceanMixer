@@ -1,0 +1,73 @@
+import { app, shell, BrowserWindow } from 'electron'
+import { join } from 'node:path'
+import { registerIpcHandlers } from './ipc'
+
+const isDev = !!process.env['ELECTRON_RENDERER_URL']
+
+function createWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 1480,
+    height: 920,
+    minWidth: 1024,
+    minHeight: 680,
+    show: false,
+    backgroundColor: '#0b0e14',
+    title: 'OceanMixer',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false,
+      // WebCodecs + large media decode happen in the renderer; keep it capable.
+      webSecurity: true
+    }
+  })
+
+  win.on('ready-to-show', () => win.show())
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
+  const rendererUrl = process.env['ELECTRON_RENDERER_URL']
+  if (rendererUrl) {
+    win.loadURL(rendererUrl)
+    win.webContents.openDevTools({ mode: 'detach' })
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+
+  return win
+}
+
+app.whenReady().then(() => {
+  app.setName('OceanMixer')
+
+  // Local media files are loaded via custom protocol / file paths; register
+  // all IPC handlers before any window can call them.
+  registerIpcHandlers()
+
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+// Allow the renderer to load local file:// media without tripping security in dev.
+app.on('web-contents-created', (_e, contents) => {
+  contents.on('will-navigate', (event, url) => {
+    const allowed = process.env['ELECTRON_RENDERER_URL']
+    if (allowed && url.startsWith(allowed)) return
+    if (url.startsWith('file://')) return
+    event.preventDefault()
+  })
+})
+
+void isDev
