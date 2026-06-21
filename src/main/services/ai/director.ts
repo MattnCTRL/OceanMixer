@@ -130,6 +130,11 @@ the current project state and, when concrete changes are warranted, calling the
     Append a new track. Use \`ref\` so later ops in the same batch can target it.
 - removeTrack: { op:"removeTrack", trackId:string }
     Remove a track (an existing track id, or a $ref created earlier in the batch).
+- setTrackProps: { op:"setTrackProps", trackId:string, props:{ name?:string,
+    muted?:boolean, hidden?:boolean, locked?:boolean, volume?:number(0..2) } }
+    Rename a track or toggle its mute/hide/lock, or set its gain.
+- moveTrack: { op:"moveTrack", trackId:string, toIndex:number }
+    Reorder a track (0 = bottom video layer; higher index composites on top).
 - addClip: { op:"addClip", trackId:string, assetId:string, start?:number,
     inPoint?:number, outPoint?:number, ref?:string }
     Place a media asset on a track. \`assetId\` MUST be an id from the MEDIA POOL.
@@ -160,6 +165,9 @@ the current project state and, when concrete changes are warranted, calling the
     "vignette"|"fadeIn"|"fadeOut", params:{ [name:string]:number }, enabled:boolean } }
     Add a parametric effect to a clip (the engine assigns the effect id).
 - removeEffect: { op:"removeEffect", clipId:string, effectId:string }
+- updateEffect: { op:"updateEffect", clipId:string, effectId:string,
+    params?:{ [name:string]:number }, enabled?:boolean }
+    Tweak an existing effect's parameters or toggle it on/off.
 - setTransition: { op:"setTransition", clipId:string, transition:{ type:"fade"|
     "dissolve"|"wipeleft"|"wiperight"|"slideup"|"slidedown"|"circleopen",
     durationSec:number } | null }

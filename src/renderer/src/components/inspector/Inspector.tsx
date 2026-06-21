@@ -13,6 +13,8 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  Eye,
+  EyeOff,
   Italic,
   X
 } from 'lucide-react'
@@ -100,10 +102,34 @@ function hasTrim(type: ClipType): boolean {
   return type === 'video' || type === 'audio'
 }
 
-/** Primary editable param key for an effect (display-only slider in v1). */
+/** Primary editable param key for an effect. */
 function primaryParam(effect: Effect): string | null {
   const keys = Object.keys(effect.params)
   return keys.length > 0 ? keys[0] : null
+}
+
+/** Slider range for a given effect param (matches the exporter's filter ranges). */
+function paramRange(effectType: Effect['type']): { min: number; max: number; step: number } {
+  switch (effectType) {
+    case 'brightness':
+      return { min: -1, max: 1, step: 0.05 }
+    case 'contrast':
+    case 'gamma':
+      return { min: 0, max: 3, step: 0.05 }
+    case 'saturation':
+      return { min: 0, max: 3, step: 0.05 }
+    case 'hue':
+      return { min: -180, max: 180, step: 1 }
+    case 'blur':
+      return { min: 0, max: 20, step: 0.5 }
+    case 'sharpen':
+      return { min: 0, max: 5, step: 0.1 }
+    case 'fadeIn':
+    case 'fadeOut':
+      return { min: 0, max: 5, step: 0.1 }
+    default:
+      return { min: 0, max: 1, step: 0.01 }
+  }
 }
 
 /* ============================================================= component */
@@ -415,6 +441,7 @@ export function Inspector(): JSX.Element {
           })
         }
         onRemove={(effectId) => run({ op: 'removeEffect', clipId, effectId })}
+        onUpdate={(effectId, patch) => run({ op: 'updateEffect', clipId, effectId, ...patch })}
       />
     </div>
   )
@@ -427,9 +454,15 @@ interface EffectsSectionProps {
   effects: Effect[]
   onAdd: (type: AddableEffectType) => void
   onRemove: (effectId: string) => void
+  onUpdate: (effectId: string, patch: { params?: Record<string, number>; enabled?: boolean }) => void
 }
 
-function EffectsSection({ effects, onAdd, onRemove }: EffectsSectionProps): JSX.Element {
+function EffectsSection({
+  effects,
+  onAdd,
+  onRemove,
+  onUpdate
+}: EffectsSectionProps): JSX.Element {
   const addOptions = useMemo(() => ADDABLE_EFFECTS, [])
 
   return (
@@ -440,38 +473,54 @@ function EffectsSection({ effects, onAdd, onRemove }: EffectsSectionProps): JSX.
       <div className="flex flex-col gap-2">
         {effects.map((effect) => {
           const key = primaryParam(effect)
+          const range = paramRange(effect.type)
           return (
             <div
               key={effect.id}
-              className="rounded border border-ocean-border bg-ocean-panel-2 p-2"
+              className={clsx(
+                'rounded border border-ocean-border bg-ocean-panel-2 p-2',
+                !effect.enabled && 'opacity-50'
+              )}
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-ocean-text">
                   {EFFECT_LABELS[effect.type]}
                 </span>
-                <button
-                  type="button"
-                  title="Remove effect"
-                  onClick={() => onRemove(effect.id)}
-                  className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-danger/20 hover:text-ocean-danger"
-                >
-                  <X size={14} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    title={effect.enabled ? 'Disable effect' : 'Enable effect'}
+                    onClick={() => onUpdate(effect.id, { enabled: !effect.enabled })}
+                    className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-panel hover:text-ocean-text"
+                  >
+                    {effect.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove effect"
+                    onClick={() => onRemove(effect.id)}
+                    className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-danger/20 hover:text-ocean-danger"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
               {key !== null && (
                 <div className="mt-1">
                   <div className="flex items-center justify-between text-xs text-ocean-muted">
                     <span className="capitalize">{key}</span>
-                    <span>{effect.params[key]}</span>
+                    <span className="tabular-nums">{effect.params[key]}</span>
                   </div>
-                  {/* Effect param editing has no dedicated EditOp in v1; this
-                      slider is display-only (disabled). See integrationNotes. */}
                   <input
                     type="range"
+                    min={range.min}
+                    max={range.max}
+                    step={range.step}
                     value={effect.params[key]}
-                    disabled
-                    readOnly
-                    className="h-1 w-full cursor-not-allowed opacity-50 accent-ocean-accent"
+                    onChange={(e) =>
+                      onUpdate(effect.id, { params: { [key]: Number(e.target.value) } })
+                    }
+                    className="h-1 w-full cursor-pointer accent-ocean-accent"
                   />
                 </div>
               )}

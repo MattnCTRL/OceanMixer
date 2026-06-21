@@ -435,14 +435,17 @@ interface TrackHeaderProps {
 }
 
 /**
- * Track header with name, kind icon, and mute/hide/lock toggles.
- *
- * NOTE: there are no EditOps for track-level mute/hidden/lock flags in the
- * current contract (only clip ops exist), so these toggles are presentational
- * for v1 and do not mutate the project. See integrationNotes.
+ * Track header with name, kind icon, and mute/hide/lock toggles. Toggles
+ * dispatch `setTrackProps` so they participate in undo/redo like any edit.
  */
 function TrackHeader({ track }: TrackHeaderProps): React.JSX.Element {
+  const apply = useProjectStore((s) => s.apply)
   const KindIcon = track.kind === 'audio' ? Music : Film
+
+  const toggle = (props: { muted?: boolean; hidden?: boolean; locked?: boolean }): void => {
+    apply([{ op: 'setTrackProps', trackId: track.id, props }])
+  }
+
   return (
     <div
       className="flex flex-col justify-between border-b border-ocean-border px-2 py-1.5"
@@ -453,26 +456,41 @@ function TrackHeader({ track }: TrackHeaderProps): React.JSX.Element {
         <span className="truncate">{track.name}</span>
       </div>
       <div className="flex items-center gap-1 text-ocean-muted">
-        <span
-          className={clsx('rounded p-0.5', track.muted ? 'text-ocean-danger' : 'text-ocean-muted/60')}
-          title={track.muted ? 'Muted' : 'Audible'}
+        <button
+          type="button"
+          onClick={() => toggle({ muted: !track.muted })}
+          className={clsx(
+            'rounded p-0.5 hover:text-ocean-text',
+            track.muted ? 'text-ocean-danger' : 'text-ocean-muted/60'
+          )}
+          title={track.muted ? 'Unmute track' : 'Mute track'}
         >
           {track.muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
-        </span>
+        </button>
         {track.kind === 'video' && (
-          <span
-            className={clsx('rounded p-0.5', track.hidden ? 'text-ocean-danger' : 'text-ocean-muted/60')}
-            title={track.hidden ? 'Hidden' : 'Visible'}
+          <button
+            type="button"
+            onClick={() => toggle({ hidden: !track.hidden })}
+            className={clsx(
+              'rounded p-0.5 hover:text-ocean-text',
+              track.hidden ? 'text-ocean-danger' : 'text-ocean-muted/60'
+            )}
+            title={track.hidden ? 'Show track' : 'Hide track'}
           >
             {track.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-          </span>
+          </button>
         )}
-        <span
-          className={clsx('rounded p-0.5', track.locked ? 'text-ocean-accent' : 'text-ocean-muted/60')}
-          title={track.locked ? 'Locked' : 'Unlocked'}
+        <button
+          type="button"
+          onClick={() => toggle({ locked: !track.locked })}
+          className={clsx(
+            'rounded p-0.5 hover:text-ocean-text',
+            track.locked ? 'text-ocean-accent' : 'text-ocean-muted/60'
+          )}
+          title={track.locked ? 'Unlock track' : 'Lock track'}
         >
           {track.locked ? <Lock size={13} /> : <Unlock size={13} />}
-        </span>
+        </button>
       </div>
     </div>
   )

@@ -28,6 +28,25 @@ export interface RemoveTrackOp {
   trackId: string
 }
 
+export interface SetTrackPropsOp {
+  op: 'setTrackProps'
+  trackId: string
+  props: Partial<{
+    name: string
+    muted: boolean
+    hidden: boolean
+    locked: boolean
+    volume: number
+  }>
+}
+
+export interface MoveTrackOp {
+  op: 'moveTrack'
+  trackId: string
+  /** new index in the tracks array (0 = bottom video layer) */
+  toIndex: number
+}
+
 export interface AddClipOp {
   op: 'addClip'
   /** track id, or a "$ref" to a track created earlier in the same batch */
@@ -107,6 +126,15 @@ export interface RemoveEffectOp {
   effectId: string
 }
 
+export interface UpdateEffectOp {
+  op: 'updateEffect'
+  clipId: string
+  effectId: string
+  /** merge into the effect's params */
+  params?: Record<string, number>
+  enabled?: boolean
+}
+
 export interface SetTransitionOp {
   op: 'setTransition'
   clipId: string
@@ -132,6 +160,8 @@ export interface RenameProjectOp {
 export type EditOp =
   | AddTrackOp
   | RemoveTrackOp
+  | SetTrackPropsOp
+  | MoveTrackOp
   | AddClipOp
   | AddTextClipOp
   | RemoveClipOp
@@ -141,6 +171,7 @@ export type EditOp =
   | SetClipPropsOp
   | AddEffectOp
   | RemoveEffectOp
+  | UpdateEffectOp
   | SetTransitionOp
   | ReorderClipsOp
   | SetProjectSettingsOp
@@ -151,6 +182,8 @@ export type EditOpName = EditOp['op']
 export const EDIT_OP_NAMES: EditOpName[] = [
   'addTrack',
   'removeTrack',
+  'setTrackProps',
+  'moveTrack',
   'addClip',
   'addTextClip',
   'removeClip',
@@ -160,6 +193,7 @@ export const EDIT_OP_NAMES: EditOpName[] = [
   'setClipProps',
   'addEffect',
   'removeEffect',
+  'updateEffect',
   'setTransition',
   'reorderClips',
   'setProjectSettings',

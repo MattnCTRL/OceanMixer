@@ -188,6 +188,34 @@ export function applyOps(input: Project, ops: EditOp[]): ApplyResult {
           break
         }
 
+        case 'setTrackProps': {
+          const track = trackById(project, resolveTrackId(op.trackId))
+          if (!track) {
+            warnings.push(`setTrackProps: track ${op.trackId} not found`)
+            break
+          }
+          const p = op.props
+          if (p.name !== undefined) track.name = p.name
+          if (p.muted !== undefined) track.muted = p.muted
+          if (p.hidden !== undefined) track.hidden = p.hidden
+          if (p.locked !== undefined) track.locked = p.locked
+          if (p.volume !== undefined) track.volume = clamp(p.volume, 0, 2)
+          break
+        }
+
+        case 'moveTrack': {
+          const id = resolveTrackId(op.trackId)
+          const from = project.tracks.findIndex((t) => t.id === id)
+          if (from < 0) {
+            warnings.push(`moveTrack: track ${id} not found`)
+            break
+          }
+          const [moved] = project.tracks.splice(from, 1)
+          const to = Math.max(0, Math.min(project.tracks.length, op.toIndex))
+          project.tracks.splice(to, 0, moved)
+          break
+        }
+
         case 'addClip': {
           const track = trackById(project, resolveTrackId(op.trackId))
           if (!track) {
@@ -356,6 +384,22 @@ export function applyOps(input: Project, ops: EditOp[]): ApplyResult {
             break
           }
           loc.clip.effects = loc.clip.effects.filter((e) => e.id !== op.effectId)
+          break
+        }
+
+        case 'updateEffect': {
+          const loc = findClip(project, op.clipId)
+          if (!loc) {
+            warnings.push(`updateEffect: clip ${op.clipId} not found`)
+            break
+          }
+          const fx = loc.clip.effects.find((e) => e.id === op.effectId)
+          if (!fx) {
+            warnings.push(`updateEffect: effect ${op.effectId} not found`)
+            break
+          }
+          if (op.params) fx.params = { ...fx.params, ...op.params }
+          if (op.enabled !== undefined) fx.enabled = op.enabled
           break
         }
 
