@@ -46,7 +46,8 @@ const api: OceanMixerApi = {
     status: () => ipcRenderer.invoke(IPC.aiStatus),
     setKey: (provider, key) => ipcRenderer.invoke(IPC.aiSetKey, provider, key),
     login: () => ipcRenderer.invoke(IPC.aiLogin),
-    logout: () => ipcRenderer.invoke(IPC.aiLogout)
+    logout: () => ipcRenderer.invoke(IPC.aiLogout),
+    installCli: () => ipcRenderer.invoke(IPC.aiInstallCli)
   },
   settings: {
     get: (key) => ipcRenderer.invoke(IPC.settingsGet, key),
@@ -56,7 +57,8 @@ const api: OceanMixerApi = {
   app: {
     paths: () => ipcRenderer.invoke(IPC.appPaths),
     openExternal: (url) => ipcRenderer.invoke(IPC.appOpenExternal, url),
-    pathForFile: (file) => webUtils.getPathForFile(file)
+    pathForFile: (file) => webUtils.getPathForFile(file),
+    openAudioMidiSetup: () => ipcRenderer.invoke(IPC.appOpenAudioMidi)
   }
 }
 

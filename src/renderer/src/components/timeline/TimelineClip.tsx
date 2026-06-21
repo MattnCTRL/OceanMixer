@@ -232,9 +232,11 @@ export function TimelineClip({
   return (
     <div
       className={clsx(
-        'group absolute top-1 bottom-1 overflow-hidden rounded-md border text-ocean-text shadow-sm',
+        'group absolute top-1 bottom-1 overflow-hidden rounded-md border text-ocean-text shadow-sm transition-shadow',
         clipColorClass(clip.type),
-        selected ? 'border-ocean-accent ring-2 ring-ocean-accent' : 'border-black/30',
+        selected
+          ? 'border-ocean-accent ring-2 ring-ocean-accent'
+          : 'border-black/30 hover:ring-1 hover:ring-ocean-accent/50',
         activeMode === 'move' ? 'cursor-grabbing' : 'cursor-grab',
         (clip.type === 'video' || clip.type === 'audio') && clip.muted && 'opacity-60'
       )}
@@ -260,6 +262,7 @@ export function TimelineClip({
 
       {/* trim handles */}
       <div
+        title="Drag to trim the start"
         className={clsx(
           'absolute inset-y-0 left-0 cursor-ew-resize bg-black/0 hover:bg-white/20',
           activeMode === 'trim-left' && 'bg-white/30'
@@ -271,6 +274,7 @@ export function TimelineClip({
         onPointerCancel={handlePointerCancel}
       />
       <div
+        title="Drag to trim the end"
         className={clsx(
           'absolute inset-y-0 right-0 cursor-ew-resize bg-black/0 hover:bg-white/20',
           activeMode === 'trim-right' && 'bg-white/30'

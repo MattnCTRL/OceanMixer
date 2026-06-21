@@ -38,13 +38,15 @@ export const IPC = {
   aiSetKey: 'ai:setKey',
   aiLogin: 'ai:login',
   aiLogout: 'ai:logout',
+  aiInstallCli: 'ai:installCli',
 
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
   settingsAll: 'settings:all',
 
   appPaths: 'app:paths',
-  appOpenExternal: 'app:openExternal'
+  appOpenExternal: 'app:openExternal',
+  appOpenAudioMidi: 'app:openAudioMidi'
 } as const
 
 /* ------------------------------------------------------------------- Export */
@@ -134,6 +136,8 @@ export interface AIStatus {
   loggedIn: boolean
   /** the `ant` CLI (used for account login) is installed and resolvable */
   cliAvailable: boolean
+  /** Homebrew is available so the CLI can be installed with one click */
+  canInstallCli: boolean
   /** account/workspace label when logged in (best effort) */
   account?: string
   /** whether the Director can make calls right now under the active authMode */
@@ -212,6 +216,8 @@ export interface OceanMixerApi {
     login(): Promise<AIStatus>
     /** sign out of the Anthropic account session */
     logout(): Promise<AIStatus>
+    /** install the `ant` CLI via Homebrew (one-click sign-in helper setup) */
+    installCli(): Promise<AIStatus>
   }
   settings: {
     get<K extends keyof AppSettings>(key: K): Promise<AppSettings[K]>
@@ -223,5 +229,7 @@ export interface OceanMixerApi {
     openExternal(url: string): Promise<void>
     /** resolve the absolute path of a File dropped from the OS (Finder/Photos) */
     pathForFile(file: File): string
+    /** open macOS Audio MIDI Setup (for configuring loopback / multi-output) */
+    openAudioMidiSetup(): Promise<void>
   }
 }

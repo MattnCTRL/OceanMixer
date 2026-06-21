@@ -88,6 +88,51 @@ export async function isAntAvailable(): Promise<boolean> {
   return (await resolveAnt()) !== null
 }
 
+/** Locate the Homebrew binary, or null. */
+async function resolveBrew(): Promise<string | null> {
+  for (const c of ['/opt/homebrew/bin/brew', '/usr/local/bin/brew', 'brew']) {
+    if (await respondsToVersion(c)) return c
+  }
+  return null
+}
+
+export async function isBrewAvailable(): Promise<boolean> {
+  return (await resolveBrew()) !== null
+}
+
+export interface InstallResult {
+  ok: boolean
+  error?: string
+}
+
+/**
+ * Install the `ant` CLI via Homebrew so account login works without the user
+ * touching a terminal. Returns ok:false with a message if brew is missing or
+ * the install fails. Re-probes the ant cache on success.
+ */
+export async function installAnt(): Promise<InstallResult> {
+  const brew = await resolveBrew()
+  if (!brew) return { ok: false, error: 'brew-missing' }
+  try {
+    await exec(brew, ['install', 'anthropics/tap/ant'], {
+      timeout: 1000 * 60 * 6,
+      env: { ...augmentedEnv(), HOMEBREW_NO_AUTO_UPDATE: '1', NONINTERACTIVE: '1' }
+    })
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+  invalidateAntCache()
+  const ant = await resolveAnt()
+  if (!ant) return { ok: false, error: 'Installed, but the CLI could not be located.' }
+  // Best-effort: clear quarantine so the binary runs without a Gatekeeper prompt.
+  try {
+    await exec('/usr/bin/xattr', ['-d', 'com.apple.quarantine', ant], { timeout: 5000 })
+  } catch {
+    /* usually nothing to clear */
+  }
+  return { ok: true }
+}
+
 /** Re-probe the CLI on next call (e.g. after the user installs it). */
 export function invalidateAntCache(): void {
   cachedAntPath = undefined

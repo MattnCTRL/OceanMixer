@@ -27,6 +27,7 @@ import type {
 } from '@shared/types'
 import type { EditOp } from '@shared/ai-ops'
 import { useProjectStore, useActiveClip } from '@renderer/store/projectStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import { clamp, formatDuration } from '@renderer/lib/time'
 
 /* ------------------------------------------------------------------ config */
@@ -205,6 +206,7 @@ export function Inspector(): JSX.Element {
           </div>
           <SliderField
             label="Scale"
+            description="Resize the clip relative to its original size."
             value={clip.transform.scale}
             min={0.1}
             max={4}
@@ -214,6 +216,7 @@ export function Inspector(): JSX.Element {
           />
           <SliderField
             label="Rotation"
+            description="Rotate the clip around its center."
             value={clip.transform.rotation}
             min={-180}
             max={180}
@@ -223,6 +226,7 @@ export function Inspector(): JSX.Element {
           />
           <SliderField
             label="Opacity"
+            description="How see-through the clip is over layers below it."
             value={clip.transform.opacity}
             min={0}
             max={1}
@@ -267,6 +271,7 @@ export function Inspector(): JSX.Element {
                 active={clip.text.align === 'left'}
                 onClick={() => setText({ align: 'left' })}
                 title="Align left"
+                description="Left-align the text."
               >
                 <AlignLeft size={15} />
               </ToggleButton>
@@ -274,6 +279,7 @@ export function Inspector(): JSX.Element {
                 active={clip.text.align === 'center'}
                 onClick={() => setText({ align: 'center' })}
                 title="Align center"
+                description="Center the text."
               >
                 <AlignCenter size={15} />
               </ToggleButton>
@@ -281,6 +287,7 @@ export function Inspector(): JSX.Element {
                 active={clip.text.align === 'right'}
                 onClick={() => setText({ align: 'right' })}
                 title="Align right"
+                description="Right-align the text."
               >
                 <AlignRight size={15} />
               </ToggleButton>
@@ -289,6 +296,7 @@ export function Inspector(): JSX.Element {
                 active={!!clip.text.bold}
                 onClick={() => setText({ bold: !clip.text?.bold })}
                 title="Bold"
+                description="Make the text bold."
               >
                 <Bold size={15} />
               </ToggleButton>
@@ -296,6 +304,7 @@ export function Inspector(): JSX.Element {
                 active={!!clip.text.italic}
                 onClick={() => setText({ italic: !clip.text?.italic })}
                 title="Italic"
+                description="Italicize the text."
               >
                 <Italic size={15} />
               </ToggleButton>
@@ -309,6 +318,7 @@ export function Inspector(): JSX.Element {
         <Section title="Audio">
           <SliderField
             label="Volume"
+            description="Clip loudness. 100% is the original level; above boosts it."
             value={clip.volume}
             min={0}
             max={2}
@@ -328,6 +338,7 @@ export function Inspector(): JSX.Element {
       <Section title="Playback">
         <SliderField
           label="Speed"
+          description="Playback rate. Above 1× is faster, below is slow motion."
           value={clip.speed}
           min={0.25}
           max={4}
@@ -377,32 +388,39 @@ export function Inspector(): JSX.Element {
       <Section title="Transition (in)">
         <div className="grid grid-cols-2 gap-2">
           <Field label="Type">
-            <select
-              value={clip.transitionIn?.type ?? 'none'}
-              onChange={(e) => {
-                const value = e.target.value
-                if (value === 'none') {
-                  run({ op: 'setTransition', clipId, transition: null })
-                } else {
-                  run({
-                    op: 'setTransition',
-                    clipId,
-                    transition: {
-                      type: value as TransitionType,
-                      durationSec: clip.transitionIn?.durationSec ?? 0.5
-                    }
-                  })
-                }
-              }}
-              className="w-full rounded border border-ocean-border bg-ocean-panel-2 px-2 py-1 text-sm text-ocean-text outline-none focus:border-ocean-accent"
+            <Tooltip
+              label="Transition in"
+              description="How this clip enters from the one before it."
+              side="left"
+              className="w-full"
             >
-              <option value="none">None</option>
-              {TRANSITION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {TRANSITION_LABELS[t]}
-                </option>
-              ))}
-            </select>
+              <select
+                value={clip.transitionIn?.type ?? 'none'}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === 'none') {
+                    run({ op: 'setTransition', clipId, transition: null })
+                  } else {
+                    run({
+                      op: 'setTransition',
+                      clipId,
+                      transition: {
+                        type: value as TransitionType,
+                        durationSec: clip.transitionIn?.durationSec ?? 0.5
+                      }
+                    })
+                  }
+                }}
+                className="w-full rounded border border-ocean-border bg-ocean-panel-2 px-2 py-1 text-sm text-ocean-text outline-none focus:border-ocean-accent"
+              >
+                <option value="none">None</option>
+                {TRANSITION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {TRANSITION_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </Tooltip>
           </Field>
           <NumberField
             label="Duration (s)"
@@ -487,22 +505,34 @@ function EffectsSection({
                   {EFFECT_LABELS[effect.type]}
                 </span>
                 <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    title={effect.enabled ? 'Disable effect' : 'Enable effect'}
-                    onClick={() => onUpdate(effect.id, { enabled: !effect.enabled })}
-                    className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-panel hover:text-ocean-text"
+                  <Tooltip
+                    label={effect.enabled ? 'Disable effect' : 'Enable effect'}
+                    description="Toggle this effect without removing it."
+                    side="left"
                   >
-                    {effect.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
-                  </button>
-                  <button
-                    type="button"
-                    title="Remove effect"
-                    onClick={() => onRemove(effect.id)}
-                    className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-danger/20 hover:text-ocean-danger"
+                    <button
+                      type="button"
+                      title={effect.enabled ? 'Disable effect' : 'Enable effect'}
+                      onClick={() => onUpdate(effect.id, { enabled: !effect.enabled })}
+                      className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-panel hover:text-ocean-text"
+                    >
+                      {effect.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    label="Remove effect"
+                    description="Delete this effect from the clip."
+                    side="left"
                   >
-                    <X size={14} />
-                  </button>
+                    <button
+                      type="button"
+                      title="Remove effect"
+                      onClick={() => onRemove(effect.id)}
+                      className="rounded p-1 text-ocean-muted transition-colors hover:bg-ocean-danger/20 hover:text-ocean-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
               {key !== null && (
@@ -531,24 +561,31 @@ function EffectsSection({
 
       <div className="mt-2">
         <label className="mb-1 block text-xs text-ocean-muted">Add effect</label>
-        <select
-          value=""
-          onChange={(e) => {
-            const value = e.target.value
-            if (value) {
-              onAdd(value as AddableEffectType)
-              e.target.value = ''
-            }
-          }}
-          className="w-full rounded border border-ocean-border bg-ocean-panel-2 px-2 py-1 text-sm text-ocean-text outline-none focus:border-ocean-accent"
+        <Tooltip
+          label="Add effect"
+          description="Apply a color or stylistic filter to this clip."
+          side="left"
+          className="w-full"
         >
-          <option value="">Add effect…</option>
-          {addOptions.map((o) => (
-            <option key={o.type} value={o.type}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          <select
+            value=""
+            onChange={(e) => {
+              const value = e.target.value
+              if (value) {
+                onAdd(value as AddableEffectType)
+                e.target.value = ''
+              }
+            }}
+            className="w-full rounded border border-ocean-border bg-ocean-panel-2 px-2 py-1 text-sm text-ocean-text outline-none focus:border-ocean-accent"
+          >
+            <option value="">Add effect…</option>
+            {addOptions.map((o) => (
+              <option key={o.type} value={o.type}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </Tooltip>
       </div>
     </Section>
   )
@@ -636,6 +673,7 @@ interface SliderFieldProps {
   min: number
   max: number
   step: number
+  description?: string
   format?: (value: number) => string
   onChange: (value: number) => void
 }
@@ -646,6 +684,7 @@ function SliderField({
   min,
   max,
   step,
+  description,
   format,
   onChange
 }: SliderFieldProps): JSX.Element {
@@ -653,7 +692,13 @@ function SliderField({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-ocean-muted">{label}</span>
+        {description ? (
+          <Tooltip label={label} description={description} side="left">
+            <span className="cursor-help text-xs text-ocean-muted">{label}</span>
+          </Tooltip>
+        ) : (
+          <span className="text-xs text-ocean-muted">{label}</span>
+        )}
         <span className="text-xs tabular-nums text-ocean-text">{display}</span>
       </div>
       <input
@@ -695,26 +740,30 @@ function ToggleButton({
   active,
   onClick,
   title,
+  description,
   children
 }: {
   active: boolean
   onClick: () => void
   title: string
+  description?: string
   children: React.ReactNode
 }): JSX.Element {
   return (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className={clsx(
-        'flex h-7 w-7 items-center justify-center rounded border transition-colors',
-        active
-          ? 'border-ocean-accent bg-ocean-accent/20 text-ocean-accent'
-          : 'border-ocean-border bg-ocean-panel-2 text-ocean-muted hover:text-ocean-text'
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip label={title} description={description} side="top">
+      <button
+        type="button"
+        title={title}
+        onClick={onClick}
+        className={clsx(
+          'flex h-7 w-7 items-center justify-center rounded border transition-colors',
+          active
+            ? 'border-ocean-accent bg-ocean-accent/20 text-ocean-accent'
+            : 'border-ocean-border bg-ocean-panel-2 text-ocean-muted hover:text-ocean-text'
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
   )
 }

@@ -4,6 +4,7 @@ import { Film, Image as ImageIcon, Music } from 'lucide-react'
 import type { MediaAsset, TrackKind } from '@shared/types'
 import type { EditOp } from '@shared/ai-ops'
 import { useProjectStore } from '@renderer/store/projectStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import { fileUrl, formatDuration } from '@renderer/lib/time'
 
 const TYPE_ICON = {
@@ -44,18 +45,24 @@ export function AssetCard({ asset }: { asset: MediaAsset }): JSX.Element {
     apply([op])
   }
 
+  const tooltipDescription =
+    asset.durationSec > 0
+      ? `${asset.type} · ${formatDuration(asset.durationSec)} — drag to the timeline or double-click to add`
+      : `${asset.type} — drag to the timeline or double-click to add`
+
   return (
-    <div
-      draggable
-      onDragStart={handleDragStart}
-      onDoubleClick={handleDoubleClick}
-      title={asset.name}
-      className={clsx(
-        'group flex flex-col overflow-hidden rounded-md border border-ocean-border',
-        'bg-ocean-panel-2 transition-colors hover:border-ocean-accent',
-        'cursor-grab select-none active:cursor-grabbing'
-      )}
-    >
+    <Tooltip label={asset.name} description={tooltipDescription} side="top" className="w-full">
+      <div
+        draggable
+        onDragStart={handleDragStart}
+        onDoubleClick={handleDoubleClick}
+        title={asset.name}
+        className={clsx(
+          'group flex w-full flex-col overflow-hidden rounded-md border border-ocean-border',
+          'bg-ocean-panel-2 transition-colors hover:border-ocean-accent',
+          'cursor-grab select-none active:cursor-grabbing'
+        )}
+      >
       <div className="relative aspect-video w-full overflow-hidden bg-ocean-bg">
         {hasThumb ? (
           <img
@@ -97,6 +104,7 @@ export function AssetCard({ asset }: { asset: MediaAsset }): JSX.Element {
         </span>
         <span className="min-w-0 flex-1 truncate text-xs text-ocean-text">{asset.name}</span>
       </div>
-    </div>
+      </div>
+    </Tooltip>
   )
 }

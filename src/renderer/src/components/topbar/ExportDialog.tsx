@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import type { ExportFormat, ExportOptions, ExportProgress } from '@shared/ipc'
 import { useProjectStore } from '@renderer/store/projectStore'
+import { LogoMark } from '@renderer/components/brand/Logo'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 
 interface ExportDialogProps {
   open: boolean
@@ -166,21 +168,23 @@ export function ExportDialog({ open, onClose }: ExportDialogProps): React.JSX.El
         {/* Header */}
         <div className="flex items-center justify-between border-b border-ocean-border px-4 py-3">
           <div className="flex items-center gap-2 text-ocean-text">
-            <Clapperboard size={18} className="text-ocean-accent" />
+            <LogoMark size={18} />
             <h2 className="text-sm font-semibold">Export Video</h2>
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={handleClose}
-            disabled={isRendering}
-            className={clsx(
-              'rounded-md p-1 text-ocean-muted transition-colors hover:bg-ocean-panel-2 hover:text-ocean-text',
-              isRendering && 'cursor-not-allowed opacity-40 hover:bg-transparent'
-            )}
-          >
-            <X size={16} />
-          </button>
+          <Tooltip label="Close" keys="Esc" side="left">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={handleClose}
+              disabled={isRendering}
+              className={clsx(
+                'rounded-md p-1 text-ocean-muted transition-colors hover:bg-ocean-panel-2 hover:text-ocean-text',
+                isRendering && 'cursor-not-allowed opacity-40 hover:bg-transparent'
+              )}
+            >
+              <X size={16} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Body */}
@@ -354,7 +358,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps): React.JSX.El
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md bg-ocean-accent px-4 py-1.5 text-sm font-medium text-ocean-bg transition-colors hover:bg-ocean-accent-2"
+                className="rounded-md bg-gradient-to-r from-ocean-accent to-ocean-accent-2 px-4 py-1.5 text-sm font-semibold text-ocean-bg transition-opacity hover:opacity-90"
               >
                 Done
               </button>
@@ -368,14 +372,20 @@ export function ExportDialog({ open, onClose }: ExportDialogProps): React.JSX.El
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={starting}
-                className="flex items-center gap-1.5 rounded-md bg-ocean-accent px-4 py-1.5 text-sm font-medium text-ocean-bg transition-colors hover:bg-ocean-accent-2 disabled:opacity-50"
+              <Tooltip
+                label="Start export"
+                description="Render the timeline with the chosen settings"
+                side="top"
               >
-                <Clapperboard size={14} /> Export
-              </button>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={starting}
+                  className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-ocean-accent to-ocean-accent-2 px-4 py-1.5 text-sm font-semibold text-ocean-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  <Clapperboard size={14} /> Export
+                </button>
+              </Tooltip>
             </>
           )}
         </div>

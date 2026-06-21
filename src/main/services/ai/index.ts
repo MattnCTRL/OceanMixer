@@ -27,8 +27,10 @@ import {
   antLogin,
   antLoggedIn,
   antLogout,
+  installAnt,
   invalidateAntCache,
-  isAntAvailable
+  isAntAvailable,
+  isBrewAvailable
 } from './anthropicAuth'
 
 /** Assemble the full Director status (auth state + CLI availability). */
@@ -38,6 +40,7 @@ async function buildStatus(): Promise<AIStatus> {
   const cliAvailable = await isAntAvailable()
   const loggedIn = cliAvailable ? await antLoggedIn() : false
   const account = loggedIn ? await antAccountLabel() : undefined
+  const canInstallCli = !cliAvailable && (await isBrewAvailable())
   const authMode = getAuthMode()
   const ready = authMode === 'oauth' ? loggedIn || hasKey : hasKey || loggedIn
   return {
@@ -47,6 +50,7 @@ async function buildStatus(): Promise<AIStatus> {
     hasKey,
     loggedIn,
     cliAvailable,
+    canInstallCli,
     account,
     ready
   }
@@ -79,6 +83,11 @@ export function registerAIHandlers(): void {
   ipcMain.handle(IPC.aiLogout, async (): Promise<AIStatus> => {
     await antLogout()
     setAuthMode('apiKey')
+    return buildStatus()
+  })
+
+  ipcMain.handle(IPC.aiInstallCli, async (): Promise<AIStatus> => {
+    await installAnt()
     return buildStatus()
   })
 }

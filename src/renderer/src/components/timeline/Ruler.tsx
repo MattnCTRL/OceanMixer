@@ -142,6 +142,7 @@ export function Ruler({
       aria-label="Timeline ruler"
       aria-valuenow={Math.round(playheadSec * 100) / 100}
       tabIndex={-1}
+      title="Click or drag to move the playhead"
       className="relative cursor-text border-b border-ocean-border bg-ocean-panel"
       style={{ width: contentWidth, height: RULER_HEIGHT, minWidth: '100%' }}
       onPointerDown={handlePointerDown}

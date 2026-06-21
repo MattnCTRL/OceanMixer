@@ -7,6 +7,7 @@
  */
 
 import { app, ipcMain, shell } from 'electron'
+import { execFile } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { join, isAbsolute } from 'node:path'
 import Store from 'electron-store'
@@ -144,5 +145,20 @@ export function registerSettingsHandlers(): void {
 
   ipcMain.handle(IPC.appOpenExternal, async (_e, url: string) => {
     await shell.openExternal(url)
+  })
+
+  ipcMain.handle(IPC.appOpenAudioMidi, async () => {
+    const candidates = [
+      '/System/Applications/Utilities/Audio MIDI Setup.app',
+      '/Applications/Utilities/Audio MIDI Setup.app'
+    ]
+    for (const p of candidates) {
+      if (existsSync(p)) {
+        const err = await shell.openPath(p)
+        if (!err) return
+      }
+    }
+    // Fallback: ask the OS to open it by name.
+    execFile('open', ['-a', 'Audio MIDI Setup'], () => undefined)
   })
 }

@@ -14,6 +14,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import clsx from 'clsx'
 import { Play, Pause, SkipBack } from 'lucide-react'
 import { useProjectStore, useProjectDuration } from '@renderer/store/projectStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import { formatTimecode } from '@renderer/lib/time'
 import { PreviewCompositor } from './compositor'
 
@@ -173,40 +174,61 @@ export function Preview(): JSX.Element {
 
       {/* transport */}
       <div className="flex items-center gap-3 border-t border-ocean-border bg-ocean-panel px-4 py-2">
-        <button
-          type="button"
-          onClick={onRewind}
-          title="Back to start"
-          className="rounded p-1.5 text-ocean-muted transition-colors hover:bg-ocean-panel-2 hover:text-ocean-text"
+        <Tooltip
+          label="Back to start"
+          keys="Home"
+          description="Jump the playhead to the beginning."
+          side="top"
         >
-          <SkipBack size={16} />
-        </button>
+          <button
+            type="button"
+            onClick={onRewind}
+            title="Back to start"
+            className="rounded p-1.5 text-ocean-muted transition-colors hover:bg-ocean-panel-2 hover:text-ocean-text"
+          >
+            <SkipBack size={16} />
+          </button>
+        </Tooltip>
 
-        <button
-          type="button"
-          onClick={onTogglePlay}
-          title={isPlaying ? 'Pause' : 'Play'}
-          className={clsx(
-            'rounded p-1.5 transition-colors hover:bg-ocean-panel-2',
-            isPlaying ? 'text-ocean-accent' : 'text-ocean-text'
-          )}
+        <Tooltip
+          label={isPlaying ? 'Pause' : 'Play'}
+          keys="Space"
+          description="Play or pause the preview."
+          side="top"
         >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-        </button>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            title={isPlaying ? 'Pause' : 'Play'}
+            className={clsx(
+              'rounded p-1.5 transition-colors hover:bg-ocean-panel-2',
+              isPlaying ? 'text-ocean-accent' : 'text-ocean-text'
+            )}
+          >
+            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+        </Tooltip>
 
         <span className="select-none font-mono text-xs tabular-nums text-ocean-text">
           {formatTimecode(playheadSec, false, fps)}
         </span>
 
-        <input
-          type="range"
-          min={0}
-          max={scrubMax}
-          step={1 / fps}
-          value={Math.min(playheadSec, scrubMax)}
-          onChange={onScrub}
-          className="h-1 flex-1 cursor-pointer appearance-none rounded bg-ocean-panel-2 accent-ocean-accent"
-        />
+        <Tooltip
+          label="Scrub"
+          description="Drag to move the playhead through the timeline."
+          side="top"
+          className="flex-1"
+        >
+          <input
+            type="range"
+            min={0}
+            max={scrubMax}
+            step={1 / fps}
+            value={Math.min(playheadSec, scrubMax)}
+            onChange={onScrub}
+            className="h-1 w-full cursor-pointer appearance-none rounded bg-ocean-panel-2 accent-ocean-accent"
+          />
+        </Tooltip>
 
         <span className="select-none font-mono text-xs tabular-nums text-ocean-muted">
           {formatTimecode(duration, false, fps)}

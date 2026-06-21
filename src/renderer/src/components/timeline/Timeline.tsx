@@ -40,6 +40,7 @@ import {
 import type { Track, MediaType } from '@shared/types'
 import type { EditOp } from '@shared/ai-ops'
 import { useProjectStore, useProjectDuration } from '@renderer/store/projectStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import { clamp } from '@renderer/lib/time'
 import { Ruler } from './Ruler'
 import { TimelineClip } from './TimelineClip'
@@ -298,56 +299,84 @@ export function Timeline(): React.JSX.Element {
       {/* toolbar */}
       <div className="flex h-9 shrink-0 items-center gap-1 border-b border-ocean-border bg-ocean-panel px-2">
         <span className="mr-2 text-xs font-medium text-ocean-muted">Timeline</span>
-        <button
-          type="button"
-          onClick={zoomOut}
-          className="rounded p-1 text-ocean-muted hover:bg-ocean-panel-2 hover:text-ocean-text"
-          title="Zoom out (Ctrl/Cmd + scroll)"
+        <Tooltip
+          label="Zoom out"
+          keys="-"
+          description="Show more of the timeline. Ctrl/Cmd + scroll also zooms."
+          side="bottom"
         >
-          <ZoomOut size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={zoomIn}
-          className="rounded p-1 text-ocean-muted hover:bg-ocean-panel-2 hover:text-ocean-text"
-          title="Zoom in (Ctrl/Cmd + scroll)"
+          <button
+            type="button"
+            onClick={zoomOut}
+            className="rounded p-1 text-ocean-muted hover:bg-ocean-panel-2 hover:text-ocean-text"
+            title="Zoom out (Ctrl/Cmd + scroll)"
+          >
+            <ZoomOut size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip
+          label="Zoom in"
+          keys="+"
+          description="See clips in finer detail. Ctrl/Cmd + scroll also zooms."
+          side="bottom"
         >
-          <ZoomIn size={16} />
-        </button>
+          <button
+            type="button"
+            onClick={zoomIn}
+            className="rounded p-1 text-ocean-muted hover:bg-ocean-panel-2 hover:text-ocean-text"
+            title="Zoom in (Ctrl/Cmd + scroll)"
+          >
+            <ZoomIn size={16} />
+          </button>
+        </Tooltip>
         <span className="w-12 text-center text-[10px] tabular-nums text-ocean-muted">
           {Math.round(pixelsPerSecond)}px/s
         </span>
 
         <div className="mx-2 h-4 w-px bg-ocean-border" />
 
-        <button
-          type="button"
-          onClick={splitSelected}
-          disabled={!hasSelection}
-          className={clsx(
-            'flex items-center gap-1 rounded px-2 py-1 text-xs',
-            hasSelection
-              ? 'text-ocean-text hover:bg-ocean-panel-2'
-              : 'cursor-not-allowed text-ocean-muted/40'
-          )}
-          title="Split selected clip at playhead (S)"
+        <Tooltip
+          label="Split clip"
+          keys="S"
+          description="Cut the selected clip at the playhead into two."
+          side="bottom"
         >
-          <Scissors size={14} /> Split
-        </button>
-        <button
-          type="button"
-          onClick={deleteSelected}
-          disabled={!hasSelection}
-          className={clsx(
-            'flex items-center gap-1 rounded px-2 py-1 text-xs',
-            hasSelection
-              ? 'text-ocean-danger hover:bg-ocean-panel-2'
-              : 'cursor-not-allowed text-ocean-muted/40'
-          )}
-          title="Delete selected clips (Delete)"
+          <button
+            type="button"
+            onClick={splitSelected}
+            disabled={!hasSelection}
+            className={clsx(
+              'flex items-center gap-1 rounded px-2 py-1 text-xs',
+              hasSelection
+                ? 'text-ocean-text hover:bg-ocean-panel-2'
+                : 'cursor-not-allowed text-ocean-muted/40'
+            )}
+            title="Split selected clip at playhead (S)"
+          >
+            <Scissors size={14} /> Split
+          </button>
+        </Tooltip>
+        <Tooltip
+          label="Delete clip"
+          keys="Del"
+          description="Remove the selected clip(s) from the timeline."
+          side="bottom"
         >
-          <Trash2 size={14} /> Delete
-        </button>
+          <button
+            type="button"
+            onClick={deleteSelected}
+            disabled={!hasSelection}
+            className={clsx(
+              'flex items-center gap-1 rounded px-2 py-1 text-xs',
+              hasSelection
+                ? 'text-ocean-danger hover:bg-ocean-panel-2'
+                : 'cursor-not-allowed text-ocean-muted/40'
+            )}
+            title="Delete selected clips (Delete)"
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </Tooltip>
       </div>
 
       {/* main grid: fixed header column + scrollable lanes */}
@@ -456,41 +485,59 @@ function TrackHeader({ track }: TrackHeaderProps): React.JSX.Element {
         <span className="truncate">{track.name}</span>
       </div>
       <div className="flex items-center gap-1 text-ocean-muted">
-        <button
-          type="button"
-          onClick={() => toggle({ muted: !track.muted })}
-          className={clsx(
-            'rounded p-0.5 hover:text-ocean-text',
-            track.muted ? 'text-ocean-danger' : 'text-ocean-muted/60'
-          )}
-          title={track.muted ? 'Unmute track' : 'Mute track'}
+        <Tooltip
+          label={track.muted ? 'Unmute track' : 'Mute track'}
+          description="Silence this track's audio in preview and export."
+          side="top"
         >
-          {track.muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
-        </button>
-        {track.kind === 'video' && (
           <button
             type="button"
-            onClick={() => toggle({ hidden: !track.hidden })}
+            onClick={() => toggle({ muted: !track.muted })}
             className={clsx(
               'rounded p-0.5 hover:text-ocean-text',
-              track.hidden ? 'text-ocean-danger' : 'text-ocean-muted/60'
+              track.muted ? 'text-ocean-danger' : 'text-ocean-muted/60'
             )}
-            title={track.hidden ? 'Show track' : 'Hide track'}
+            title={track.muted ? 'Unmute track' : 'Mute track'}
           >
-            {track.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+            {track.muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
           </button>
+        </Tooltip>
+        {track.kind === 'video' && (
+          <Tooltip
+            label={track.hidden ? 'Show track' : 'Hide track'}
+            description="Toggle this video layer's visibility in the composite."
+            side="top"
+          >
+            <button
+              type="button"
+              onClick={() => toggle({ hidden: !track.hidden })}
+              className={clsx(
+                'rounded p-0.5 hover:text-ocean-text',
+                track.hidden ? 'text-ocean-danger' : 'text-ocean-muted/60'
+              )}
+              title={track.hidden ? 'Show track' : 'Hide track'}
+            >
+              {track.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
+          </Tooltip>
         )}
-        <button
-          type="button"
-          onClick={() => toggle({ locked: !track.locked })}
-          className={clsx(
-            'rounded p-0.5 hover:text-ocean-text',
-            track.locked ? 'text-ocean-accent' : 'text-ocean-muted/60'
-          )}
-          title={track.locked ? 'Unlock track' : 'Lock track'}
+        <Tooltip
+          label={track.locked ? 'Unlock track' : 'Lock track'}
+          description="Prevent edits to clips on this track."
+          side="top"
         >
-          {track.locked ? <Lock size={13} /> : <Unlock size={13} />}
-        </button>
+          <button
+            type="button"
+            onClick={() => toggle({ locked: !track.locked })}
+            className={clsx(
+              'rounded p-0.5 hover:text-ocean-text',
+              track.locked ? 'text-ocean-accent' : 'text-ocean-muted/60'
+            )}
+            title={track.locked ? 'Unlock track' : 'Lock track'}
+          >
+            {track.locked ? <Lock size={13} /> : <Unlock size={13} />}
+          </button>
+        </Tooltip>
       </div>
     </div>
   )

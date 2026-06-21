@@ -11,6 +11,7 @@ import { Sparkles, Send, KeyRound, AlertTriangle, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import type { AIMessage, AIChatRequest, AIStatus } from '@shared/ipc'
 import { useProjectStore } from '@renderer/store/projectStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 
 /** A chat entry. `system` entries are local-only notices (warnings, errors). */
 interface ChatEntry {
@@ -247,20 +248,27 @@ export function Director(): JSX.Element {
             placeholder="Ask the Director to edit your project…"
             className="max-h-40 min-h-[2.5rem] flex-1 resize-none bg-transparent text-sm text-ocean-text placeholder:text-ocean-muted focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={loading || input.trim().length === 0}
-            aria-label="Send"
-            className={clsx(
-              'flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors',
-              loading || input.trim().length === 0
-                ? 'cursor-not-allowed bg-ocean-panel text-ocean-muted'
-                : 'bg-ocean-accent text-ocean-bg hover:opacity-90'
-            )}
+          <Tooltip
+            label="Send to Director"
+            keys="Enter"
+            description="Ask the AI to edit your timeline. Shift+Enter for a new line."
+            side="top"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={loading || input.trim().length === 0}
+              aria-label="Send"
+              className={clsx(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors',
+                loading || input.trim().length === 0
+                  ? 'cursor-not-allowed bg-ocean-panel text-ocean-muted'
+                  : 'bg-gradient-to-r from-ocean-accent to-ocean-accent-2 text-ocean-bg hover:opacity-90'
+              )}
+            >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            </button>
+          </Tooltip>
         </div>
         <p className="mt-1 px-1 text-[10px] text-ocean-muted">
           Enter to send · Shift+Enter for a new line

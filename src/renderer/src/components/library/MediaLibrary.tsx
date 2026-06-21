@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
-import { FilePlus, FolderPlus, Loader2, Mic, Upload } from 'lucide-react'
+import { FilePlus, FolderPlus, Loader2, Mic, SlidersHorizontal, Upload } from 'lucide-react'
 import clsx from 'clsx'
 import { useProjectStore } from '@renderer/store/projectStore'
+import { useUIStore } from '@renderer/store/uiStore'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import type { MediaAsset } from '@shared/types'
 import { AssetCard } from './AssetCard'
-import { AudioRecorder } from './AudioRecorder'
 
 /**
  * The media pool panel. Imports source files via the native dialog, a whole
@@ -13,9 +14,10 @@ import { AudioRecorder } from './AudioRecorder'
  */
 export function MediaLibrary(): JSX.Element {
   const media = useProjectStore((s) => s.project.media)
+  const openRecorder = useUIStore((s) => s.openRecorder)
+  const openAudioSetup = useUIStore((s) => s.openAudioSetup)
   const [importing, setImporting] = useState(false)
   const [dragging, setDragging] = useState(false)
-  const [recorderOpen, setRecorderOpen] = useState(false)
   const dragDepth = useRef(0)
 
   const addAssets = useCallback((assets: MediaAsset[]) => {
@@ -109,15 +111,42 @@ export function MediaLibrary(): JSX.Element {
       <header className="flex shrink-0 items-center justify-between border-b border-ocean-border px-3 py-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-ocean-muted">Media</h2>
         <div className="flex items-center gap-1">
-          <IconBtn title="Import files" onClick={handleImportFiles} busy={importing}>
-            <FilePlus size={14} />
-          </IconBtn>
-          <IconBtn title="Import a folder" onClick={handleImportFolder} busy={importing}>
-            <FolderPlus size={14} />
-          </IconBtn>
-          <IconBtn title="Record audio" onClick={() => setRecorderOpen(true)}>
-            <Mic size={14} />
-          </IconBtn>
+          <Tooltip
+            label="Import files"
+            description="Pick photos, videos & music from your computer."
+            side="bottom"
+          >
+            <IconBtn title="Import files" onClick={handleImportFiles} busy={importing}>
+              <FilePlus size={14} />
+            </IconBtn>
+          </Tooltip>
+          <Tooltip
+            label="Import a folder"
+            description="Bring in every supported file inside a folder."
+            side="bottom"
+          >
+            <IconBtn title="Import a folder" onClick={handleImportFolder} busy={importing}>
+              <FolderPlus size={14} />
+            </IconBtn>
+          </Tooltip>
+          <Tooltip
+            label="Record audio"
+            description="Capture a voiceover or system audio into a new clip."
+            side="bottom"
+          >
+            <IconBtn title="Record audio" onClick={openRecorder}>
+              <Mic size={14} />
+            </IconBtn>
+          </Tooltip>
+          <Tooltip
+            label="Audio setup"
+            description="Configure loopback for capturing Apple Music & system sound."
+            side="bottom"
+          >
+            <IconBtn title="Audio setup" onClick={openAudioSetup}>
+              <SlidersHorizontal size={14} />
+            </IconBtn>
+          </Tooltip>
         </div>
       </header>
 
@@ -167,8 +196,6 @@ export function MediaLibrary(): JSX.Element {
           </div>
         </div>
       )}
-
-      {recorderOpen && <AudioRecorder open onClose={() => setRecorderOpen(false)} />}
     </div>
   )
 }

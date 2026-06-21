@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { TopBar } from './components/topbar/TopBar'
 import { MediaLibrary } from './components/library/MediaLibrary'
 import { Preview } from './components/preview/Preview'
@@ -6,13 +6,16 @@ import { Timeline } from './components/timeline/Timeline'
 import { Inspector } from './components/inspector/Inspector'
 import { Director } from './components/director/Director'
 import { SettingsModal } from './components/settings/SettingsModal'
+import { AudioRecorder } from './components/library/AudioRecorder'
+import { AudioSetupHelper } from './components/library/AudioSetupHelper'
+import { ShortcutsOverlay } from './components/help/ShortcutsOverlay'
+import { WelcomeCard } from './components/help/WelcomeCard'
 import { useProjectStore } from './store/projectStore'
+import { useUIStore } from './store/uiStore'
 
 export default function App() {
-  const [settingsOpen, setSettingsOpen] = useState(false)
-
-  // Global keyboard shortcuts (undo/redo, transport). Timeline owns clip-level
-  // shortcuts (delete/split) while it has focus.
+  // Global keyboard shortcuts (undo/redo, transport, help). Timeline owns
+  // clip-level shortcuts (delete/split) while it has focus.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const target = e.target as HTMLElement | null
@@ -22,22 +25,27 @@ export default function App() {
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable)
       const meta = e.metaKey || e.ctrlKey
-      const s = useProjectStore.getState()
+      const project = useProjectStore.getState()
 
       if (meta && e.key.toLowerCase() === 'z') {
         e.preventDefault()
-        if (e.shiftKey) s.redo()
-        else s.undo()
+        if (e.shiftKey) project.redo()
+        else project.undo()
         return
       }
       if (meta && e.key.toLowerCase() === 'y') {
         e.preventDefault()
-        s.redo()
+        project.redo()
+        return
+      }
+      if (!typing && e.key === '?') {
+        e.preventDefault()
+        useUIStore.getState().openShortcuts()
         return
       }
       if (e.key === ' ' && !typing) {
         e.preventDefault()
-        s.togglePlay()
+        project.togglePlay()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -47,7 +55,7 @@ export default function App() {
   return (
     <div className="flex h-full w-full flex-col bg-ocean-bg text-ocean-text">
       <header className="titlebar-drag flex h-11 shrink-0 items-center border-b border-ocean-border bg-ocean-panel pl-20">
-        <TopBar onOpenSettings={() => setSettingsOpen(true)} />
+        <TopBar />
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -74,7 +82,12 @@ export default function App() {
         </aside>
       </div>
 
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {/* Overlays — each reads its own open state from the UI store */}
+      <SettingsModal />
+      <AudioRecorder />
+      <AudioSetupHelper />
+      <ShortcutsOverlay />
+      <WelcomeCard />
     </div>
   )
 }

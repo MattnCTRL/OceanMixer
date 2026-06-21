@@ -7,47 +7,54 @@ import {
   Undo2,
   Redo2,
   Clapperboard,
+  HelpCircle,
   Settings as SettingsIcon
 } from 'lucide-react'
 import { useProjectStore } from '@renderer/store/projectStore'
+import { useUIStore } from '@renderer/store/uiStore'
+import { Logo } from '@renderer/components/brand/Logo'
+import { Tooltip } from '@renderer/components/ui/Tooltip'
 import { ExportDialog } from './ExportDialog'
-
-interface TopBarProps {
-  onOpenSettings: () => void
-}
 
 interface ToolButtonProps {
   icon: React.ReactNode
   label: string
+  description?: string
+  keys?: string
   onClick: () => void
   disabled?: boolean
-  accent?: boolean
 }
 
-function ToolButton({ icon, label, onClick, disabled, accent }: ToolButtonProps): React.JSX.Element {
+function ToolButton({
+  icon,
+  label,
+  description,
+  keys,
+  onClick,
+  disabled
+}: ToolButtonProps): React.JSX.Element {
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
-      className={clsx(
-        'no-drag flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ocean-accent',
-        disabled
-          ? 'cursor-not-allowed text-ocean-muted/40'
-          : accent
-            ? 'bg-ocean-accent/15 text-ocean-accent hover:bg-ocean-accent/25'
+    <Tooltip label={label} description={description} keys={keys} side="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        disabled={disabled}
+        className={clsx(
+          'no-drag flex h-8 w-8 items-center justify-center rounded-md transition-colors',
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ocean-accent',
+          disabled
+            ? 'cursor-not-allowed text-ocean-muted/40'
             : 'text-ocean-muted hover:bg-ocean-panel-2 hover:text-ocean-text'
-      )}
-    >
-      {icon}
-    </button>
+        )}
+      >
+        {icon}
+      </button>
+    </Tooltip>
   )
 }
 
-export function TopBar({ onOpenSettings }: TopBarProps): React.JSX.Element {
+export function TopBar(): React.JSX.Element {
   const [exportOpen, setExportOpen] = useState(false)
 
   const projectName = useProjectStore((s) => s.project.name)
@@ -93,12 +100,20 @@ export function TopBar({ onOpenSettings }: TopBarProps): React.JSX.Element {
     useProjectStore.getState().redo()
   }, [])
 
+  const handleHelp = useCallback(() => {
+    useUIStore.getState().openShortcuts()
+  }, [])
+
+  const handleSettings = useCallback(() => {
+    useUIStore.getState().openSettings()
+  }, [])
+
   return (
-    <div className="flex h-11 w-full items-center gap-2 border-b border-ocean-border bg-ocean-panel px-3 select-none">
-      {/* Left: app + project name. Empty space here is draggable (titlebar). */}
+    <div className="relative flex h-11 w-full items-center gap-2 border-b border-ocean-border bg-gradient-to-b from-ocean-panel to-ocean-bg px-3 select-none">
+      {/* Left: brand + project name. Empty space here is draggable (titlebar). */}
       <div className="flex min-w-0 items-center gap-2 pl-16">
-        <span className="text-sm font-semibold tracking-tight text-ocean-text">OceanMixer</span>
-        <span className="text-ocean-border">/</span>
+        <Logo size={20} className="no-drag" />
+        <span className="mx-0.5 h-4 w-px bg-ocean-border" />
         <span className="truncate text-sm text-ocean-muted" title={projectName}>
           {projectName || 'Untitled'}
         </span>
@@ -116,44 +131,83 @@ export function TopBar({ onOpenSettings }: TopBarProps): React.JSX.Element {
 
       {/* Right: controls */}
       <div className="no-drag flex items-center gap-1">
-        <ToolButton icon={<FilePlus size={16} />} label="New project" onClick={handleNew} />
-        <ToolButton icon={<FolderOpen size={16} />} label="Open project…" onClick={handleOpen} />
-        <ToolButton icon={<Save size={16} />} label="Save project" onClick={handleSave} />
+        <ToolButton
+          icon={<FilePlus size={16} />}
+          label="New project"
+          description="Start a fresh, empty project"
+          onClick={handleNew}
+        />
+        <ToolButton
+          icon={<FolderOpen size={16} />}
+          label="Open project"
+          description="Open a saved .ocean project file"
+          keys="⌘O"
+          onClick={handleOpen}
+        />
+        <ToolButton
+          icon={<Save size={16} />}
+          label="Save project"
+          description="Save changes to disk"
+          keys="⌘S"
+          onClick={handleSave}
+        />
 
         <div className="mx-1 h-5 w-px bg-ocean-border" />
 
         <ToolButton
           icon={<Undo2 size={16} />}
           label="Undo"
+          description="Revert the last edit"
+          keys="⌘Z"
           onClick={handleUndo}
           disabled={!canUndo}
         />
         <ToolButton
           icon={<Redo2 size={16} />}
           label="Redo"
+          description="Reapply the last undone edit"
+          keys="⌘⇧Z"
           onClick={handleRedo}
           disabled={!canRedo}
         />
 
         <div className="mx-1 h-5 w-px bg-ocean-border" />
 
-        <button
-          type="button"
-          title="Export video"
-          aria-label="Export video"
-          onClick={() => setExportOpen(true)}
-          className="no-drag flex h-8 items-center gap-1.5 rounded-md bg-ocean-accent px-3 text-sm font-medium text-ocean-bg transition-colors hover:bg-ocean-accent-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-ocean-accent"
+        <Tooltip
+          label="Export video"
+          description="Render the timeline to a video or GIF file"
+          side="bottom"
         >
-          <Clapperboard size={16} />
-          <span>Export</span>
-        </button>
+          <button
+            type="button"
+            aria-label="Export video"
+            onClick={() => setExportOpen(true)}
+            className="no-drag flex h-8 items-center gap-1.5 rounded-md bg-gradient-to-r from-ocean-accent to-ocean-accent-2 px-3 text-sm font-semibold text-ocean-bg transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-ocean-accent"
+          >
+            <Clapperboard size={16} />
+            <span>Export</span>
+          </button>
+        </Tooltip>
 
+        <div className="mx-1 h-5 w-px bg-ocean-border" />
+
+        <ToolButton
+          icon={<HelpCircle size={16} />}
+          label="Keyboard shortcuts"
+          description="View all keyboard shortcuts"
+          keys="?"
+          onClick={handleHelp}
+        />
         <ToolButton
           icon={<SettingsIcon size={16} />}
           label="Settings"
-          onClick={onOpenSettings}
+          description="Open project and app settings"
+          onClick={handleSettings}
         />
       </div>
+
+      {/* Subtle gradient hairline under the bar */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-ocean-accent/30 to-transparent" />
 
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
