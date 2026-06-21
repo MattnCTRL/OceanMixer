@@ -353,11 +353,76 @@ function safeUnlink(p: string): void {
 
 /* ----------------------------------------------------------------- handlers */
 
+/**
+ * Persist a recorded audio blob to disk and return it as a MediaAsset.
+ *
+ * MediaRecorder WebM/Opus blobs carry no duration in their header, so ffprobe
+ * would report 0s and the clip would be unusable on the timeline. We transcode
+ * to M4A (AAC), which writes a correct duration and is broadly compatible; if
+ * transcoding fails we fall back to the raw file.
+ */
+export async function saveRecording(
+  bytes: Uint8Array,
+  ext: string,
+  name?: string
+): Promise<MediaAsset> {
+  const safeExt = (ext || 'webm').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'webm'
+  const dir = path.join(getCacheDir(), 'recordings')
+  fs.mkdirSync(dir, { recursive: true })
+
+  const base =
+    name && name.trim().length > 0
+      ? name.trim().replace(/[^\w.-]+/g, '_').slice(0, 60)
+      : `recording_${newId('rec')}`
+
+  const rawFile = path.join(dir, `${base}.${safeExt}`)
+  fs.writeFileSync(rawFile, Buffer.from(bytes))
+
+  // Transcode to M4A for a correct duration + clean playback.
+  const m4aFile = path.join(dir, `${base}.m4a`)
+  let finalFile = rawFile
+  try {
+    await runChecked(ffmpegPath, [
+      '-y',
+      '-i',
+      rawFile,
+      '-vn',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '192k',
+      m4aFile
+    ])
+    finalFile = m4aFile
+    try {
+      fs.unlinkSync(rawFile)
+    } catch {
+      /* keep the raw file if it can't be removed */
+    }
+  } catch {
+    // Transcode failed — keep and use the raw recording.
+    finalFile = rawFile
+  }
+
+  const assets = await probePaths([finalFile])
+  if (assets.length === 0) {
+    throw new Error('The recording could not be read after saving.')
+  }
+  return assets[0]
+}
+
 export function registerMediaHandlers(): void {
   ipcMain.handle(IPC.mediaProbe, async (_e, paths: string[]): Promise<MediaAsset[]> => {
     if (!Array.isArray(paths)) return []
     return probePaths(paths)
   })
+
+  ipcMain.handle(
+    IPC.mediaSaveRecording,
+    async (_e, bytes: Uint8Array, ext: string, name?: string): Promise<MediaAsset> => {
+      return saveRecording(bytes, ext, name)
+    }
+  )
 
   ipcMain.handle(
     IPC.mediaThumbnail,

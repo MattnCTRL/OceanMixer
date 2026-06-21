@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC } from '../shared/ipc'
 import type {
   OceanMixerApi,
@@ -9,6 +9,7 @@ import type {
 const api: OceanMixerApi = {
   dialog: {
     openMedia: () => ipcRenderer.invoke(IPC.dialogOpenMedia),
+    openMediaFolder: () => ipcRenderer.invoke(IPC.dialogOpenFolder),
     exportPath: (defaultName, format) =>
       ipcRenderer.invoke(IPC.dialogExportPath, defaultName, format),
     openProject: () => ipcRenderer.invoke(IPC.dialogOpenProject),
@@ -17,7 +18,9 @@ const api: OceanMixerApi = {
   media: {
     probe: (paths) => ipcRenderer.invoke(IPC.mediaProbe, paths),
     thumbnail: (assetPath, atSec) => ipcRenderer.invoke(IPC.mediaThumbnail, assetPath, atSec),
-    waveform: (assetPath) => ipcRenderer.invoke(IPC.mediaWaveform, assetPath)
+    waveform: (assetPath) => ipcRenderer.invoke(IPC.mediaWaveform, assetPath),
+    saveRecording: (bytes, ext, name) =>
+      ipcRenderer.invoke(IPC.mediaSaveRecording, bytes, ext, name)
   },
   exporter: {
     start: (project, options) => ipcRenderer.invoke(IPC.exportStart, project, options),
@@ -52,7 +55,8 @@ const api: OceanMixerApi = {
   },
   app: {
     paths: () => ipcRenderer.invoke(IPC.appPaths),
-    openExternal: (url) => ipcRenderer.invoke(IPC.appOpenExternal, url)
+    openExternal: (url) => ipcRenderer.invoke(IPC.appOpenExternal, url),
+    pathForFile: (file) => webUtils.getPathForFile(file)
   }
 }
 

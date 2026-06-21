@@ -1,18 +1,18 @@
 # OceanMixer
 
-A free, local desktop studio for mixing **video, images, and music** into finished clips — with an AI **Creative Director** that can plan and build edits for you from a prompt.
+A free, local desktop studio for mixing **your own video, images, and music** into finished clips — with an AI **Creative Director** that arranges your footage for you from a prompt.
 
-OceanMixer runs entirely on your machine. Your media never leaves your computer except when you explicitly call a cloud AI model. It is built for personal, non-commercial creative work.
+OceanMixer edits the media you already have (camera-roll photos and videos, your own music). It does **not** generate AI imagery — the AI is purely an editor: it plans and performs the cuts, splices, placement, and timing. OceanMixer runs entirely on your machine; your media never leaves your computer except for the text describing your project that is sent to the AI when you use the Creative Director. Built for personal, non-commercial creative work.
 
 > **Personal use only.** OceanMixer and anything you export with it are for personal, non-commercial use. By using this software you agree to that. See [LICENSE](./LICENSE) (PolyForm Noncommercial 1.0.0).
 
 ## Highlights
 
 - **Multi-track timeline editor** — video, audio, image, and text tracks with trim, split, move, transitions, transforms, and effects.
-- **Real preview** — GPU-accelerated playback via the browser WebCodecs engine bundled with the app.
+- **Real preview** — a canvas compositor driven by the bundled Chromium media engine, synced to the timeline with full transport and audio.
 - **FFmpeg export** — render to MP4 / MOV / WebM / GIF. FFmpeg ships with the app; nothing to install.
-- **AI Creative Director** — describe what you want ("cut a 60-second highlight reel from these clips set to this track") and the assistant edits the timeline directly. It reads your project and applies concrete edit operations you can undo.
-- **Local-first, hybrid AI** — cheap/frequent work runs locally where possible; heavy generation uses cloud models with your own API key, so you only ever pay for your own AI usage.
+- **AI Creative Director** — describe what you want ("cut a 60-second highlight reel from these clips set to this track") and the assistant assembles the timeline directly from *your* media. It reads your project and applies concrete edit operations you can undo. It never generates new footage — only arranges what you import.
+- **Your own AI account** — sign in with your Anthropic account or use an API key; you only ever pay for your own usage.
 
 ## Status
 
@@ -23,7 +23,7 @@ Early development. The editor core (import → timeline → preview → export) 
 - **Electron** desktop shell (macOS / Windows / Linux)
 - **React + TypeScript** UI, built with **electron-vite**
 - **FFmpeg** (bundled) for media probing, thumbnails, waveforms, and export
-- **WebCodecs** for timeline preview/decoding
+- **Canvas + Chromium media elements** for timeline preview/decoding
 - **Zustand** for editor state, **Tailwind CSS** for the interface
 
 ## Getting started
@@ -63,14 +63,17 @@ AI Director (and undo/redo) use are defined in `src/shared/ai-ops.ts`.
 ## Roadmap
 
 - [x] Project scaffold, data model, IPC contracts
-- [ ] Media import + library with thumbnails and waveforms
-- [ ] Multi-track timeline with trim / split / move / transitions
-- [ ] WebCodecs preview player synced to the timeline
-- [ ] FFmpeg export pipeline (filtergraph compiler)
-- [ ] AI Creative Director (timeline-aware edit operations)
-- [ ] Effects, transforms, and text/title tools
-- [ ] Generative media (text-to-image / video, music) via cloud providers
-- [ ] Enhancement (upscale, denoise, background removal)
+- [x] Media import + library with thumbnails and waveforms
+- [x] Multi-track timeline with trim / split / move
+- [x] Preview player synced to the timeline
+- [x] FFmpeg export pipeline (filtergraph compiler)
+- [x] AI Creative Director (timeline-aware edit operations)
+- [x] Effects, transforms, and text/title tools
+- [ ] Drag media in from Finder/Photos; import whole folders
+- [ ] Assembly aids over your own footage: auto-cut to the beat, scene & silence detection, smart trims
+- [ ] Auto-captions / subtitles from your clips' audio (on-device transcription)
+
+> OceanMixer is intentionally **not** a generator. It will never create AI imagery, video, or music — it only helps you arrange the media you bring.
 
 ## License
 

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, session } from 'electron'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
 
@@ -44,6 +44,16 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   app.setName('OceanMixer')
+
+  // Allow microphone / audio capture for the in-app recorder. getUserMedia in
+  // the renderer requests the 'media' permission; grant it (the OS still shows
+  // its own microphone prompt on first use).
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'media')
+  })
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => {
+    return permission === 'media'
+  })
 
   // Local media files are loaded via custom protocol / file paths; register
   // all IPC handlers before any window can call them.

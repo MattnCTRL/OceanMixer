@@ -17,10 +17,12 @@ export const IPC = {
   dialogExportPath: 'dialog:exportPath',
   dialogOpenProject: 'dialog:openProject',
   dialogSaveProject: 'dialog:saveProject',
+  dialogOpenFolder: 'dialog:openFolder',
 
   mediaProbe: 'media:probe',
   mediaThumbnail: 'media:thumbnail',
   mediaWaveform: 'media:waveform',
+  mediaSaveRecording: 'media:saveRecording',
 
   exportStart: 'export:start',
   exportCancel: 'export:cancel',
@@ -178,6 +180,8 @@ export interface AppPaths {
 export interface OceanMixerApi {
   dialog: {
     openMedia(): Promise<MediaAsset[]>
+    /** pick a folder; recursively imports all media files inside it */
+    openMediaFolder(): Promise<MediaAsset[]>
     exportPath(defaultName: string, format: ExportFormat): Promise<string | null>
     openProject(): Promise<{ project: Project; path: string } | null>
     saveProject(defaultName: string): Promise<string | null>
@@ -186,6 +190,8 @@ export interface OceanMixerApi {
     probe(paths: string[]): Promise<MediaAsset[]>
     thumbnail(assetPath: string, atSec: number): Promise<string> // data URL
     waveform(assetPath: string): Promise<string> // file path to PNG
+    /** persist a recorded audio blob to disk, probe it, return the asset */
+    saveRecording(bytes: Uint8Array, ext: string, name?: string): Promise<MediaAsset>
   }
   exporter: {
     start(project: Project, options: ExportOptions): Promise<ExportHandle>
@@ -215,5 +221,7 @@ export interface OceanMixerApi {
   app: {
     paths(): Promise<AppPaths>
     openExternal(url: string): Promise<void>
+    /** resolve the absolute path of a File dropped from the OS (Finder/Photos) */
+    pathForFile(file: File): string
   }
 }

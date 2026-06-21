@@ -18,6 +18,11 @@ mac:
     - zip
   hardenedRuntime: true
   gatekeeperAssert: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: OceanMixer records audio (for example, music routed through a loopback device) into your project.
+    NSCameraUsageDescription: OceanMixer can record from connected cameras into your project.
 win:
   target:
     - nsis
