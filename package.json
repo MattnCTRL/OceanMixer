@@ -1,5 +1,6 @@
 {
   "name": "oceanmixer",
+  "productName": "OceanMixer",
   "version": "0.1.0",
   "description": "OceanMixer — a free, open-source, AI-assisted local video/image/music mixer and editor.",
   "author": "OceanMixer contributors",

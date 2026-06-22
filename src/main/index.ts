@@ -1,8 +1,38 @@
-import { app, shell, BrowserWindow, session } from 'electron'
+import { app, shell, BrowserWindow, session, Menu } from 'electron'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
 
+// Set the app name as early as possible so the macOS menu bar, About panel, and
+// dock show "OceanMixer" instead of the bundle default ("Electron") in dev.
+// Packaged builds also get this from electron-builder's productName.
+app.setName('OceanMixer')
+if (process.platform === 'darwin') process.title = 'OceanMixer'
+
 const isDev = !!process.env['ELECTRON_RENDERER_URL']
+
+/** Build a macOS-style application menu titled with the app name. */
+function buildAppMenu(): void {
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [{ role: 'appMenu' as const }]
+      : []),
+    { role: 'fileMenu' },
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: 'OceanMixer on GitHub',
+          click: () => shell.openExternal('https://github.com/MattnCTRL/OceanMixer')
+        }
+      ]
+    }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -44,6 +74,12 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   app.setName('OceanMixer')
+  app.setAboutPanelOptions({
+    applicationName: 'OceanMixer',
+    applicationVersion: app.getVersion(),
+    credits: 'A free, local AI-assisted video/image/music mixer.'
+  })
+  buildAppMenu()
 
   // Allow microphone / audio capture for the in-app recorder. getUserMedia in
   // the renderer requests the 'media' permission; grant it (the OS still shows
