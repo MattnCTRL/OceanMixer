@@ -1,4 +1,5 @@
-import { app, shell, BrowserWindow, session, Menu } from 'electron'
+import { app, shell, BrowserWindow, session, Menu, nativeImage } from 'electron'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
 
@@ -80,6 +81,18 @@ app.whenReady().then(() => {
     credits: 'A free, local AI-assisted video/image/music mixer.'
   })
   buildAppMenu()
+
+  // In dev we run the prebuilt Electron binary, so the dock shows Electron's
+  // icon. Override it with the OceanMixer icon at runtime. (Packaged builds get
+  // the icon from the bundle via electron-builder, so this is dev-focused.)
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      const iconPath = join(app.getAppPath(), 'build', 'icon.png')
+      if (existsSync(iconPath)) app.dock.setIcon(nativeImage.createFromPath(iconPath))
+    } catch {
+      /* non-fatal */
+    }
+  }
 
   // Allow microphone / audio capture for the in-app recorder. getUserMedia in
   // the renderer requests the 'media' permission; grant it (the OS still shows

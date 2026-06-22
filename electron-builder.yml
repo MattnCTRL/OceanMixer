@@ -13,6 +13,7 @@ asarUnpack:
   - node_modules/ffprobe-static/**
 mac:
   category: public.app-category.video
+  icon: build/icon.icns
   target:
     - dmg
     - zip
