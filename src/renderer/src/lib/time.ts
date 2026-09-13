@@ -39,7 +39,9 @@ export function clamp(v: number, lo: number, hi: number): number {
 }
 
 export function fileUrl(path: string): string {
-  // Encode a local absolute path for use in <video>/<img> src.
+  // Encode a local absolute path for the privileged oceanfile:// scheme (see
+  // main/index.ts). Raw file:// URLs can't be loaded by an http-origin page in
+  // dev; the custom scheme works in both dev and packaged builds.
   const encoded = path.split('/').map(encodeURIComponent).join('/')
-  return `file://${encoded}`
+  return `oceanfile://${encoded}`
 }

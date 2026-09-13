@@ -80,31 +80,51 @@ export function setAuthMode(mode: AIAuthMode): void {
 }
 
 /**
- * Returns an absolute path to the cache directory, creating it (recursively)
- * if it does not yet exist. Honors a user-configured `cacheDir` when it is an
- * absolute path; otherwise defaults to `<userData>/cache`.
+ * Returns an absolute path to the derived-media cache directory (thumbnails,
+ * waveforms), creating it if needed. Honors a user-configured `cacheDir` when
+ * it is an absolute path; otherwise defaults to `<userData>/media-cache`.
+ *
+ * NB: the default is deliberately NOT `<userData>/cache`. macOS is
+ * case-insensitive, so `cache` resolves to the same folder as Chromium's own
+ * managed `Cache` directory — which Chromium evicts and can wipe wholesale,
+ * taking anything we stored there with it. Only put regenerable data here.
  */
 export function getCacheDir(): string {
   const configured = store().get('cacheDir')
+  const fallbackDir = join(app.getPath('userData'), 'media-cache')
   const dir =
     typeof configured === 'string' && configured.trim().length > 0 && isAbsolute(configured)
       ? configured
-      : join(app.getPath('userData'), 'cache')
+      : fallbackDir
 
   try {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   } catch {
     // If the configured dir can't be created, fall back to the default and try
     // once more so callers always get a usable directory.
-    const fallback = join(app.getPath('userData'), 'cache')
     try {
-      if (!existsSync(fallback)) mkdirSync(fallback, { recursive: true })
+      if (!existsSync(fallbackDir)) mkdirSync(fallbackDir, { recursive: true })
     } catch {
       /* best effort */
     }
-    return fallback
+    return fallbackDir
   }
 
+  return dir
+}
+
+/**
+ * Absolute path to the durable recordings directory (`<userData>/recordings`),
+ * created if missing. Recordings are user data — never the cache dir, which is
+ * disposable and collides with Chromium's managed `Cache` folder.
+ */
+export function getRecordingsDir(): string {
+  const dir = join(app.getPath('userData'), 'recordings')
+  try {
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+  } catch {
+    /* best effort; the subsequent write surfaces any real error */
+  }
   return dir
 }
 

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(break)",
+      "Bash(curl -s -o /dev/null -w \"renderer http: %{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(/Users/matthewwhiteman/OceanMixer/node_modules/ffmpeg-static/ffmpeg -hide_banner -nostats -i '/Users/matthewwhiteman/Library/Application Support/OceanMixer/Cache/recordings/Recording_0_32.m4a' -af volumedetect -f null -)",
+      "Bash(pkill -f \"OceanMixer/node_modules/.bin/electron-vite\")",
+      "Bash(pkill -f \"OceanMixer/node_modules/electron/dist\")",
+      "Bash(pkill -f \"electron-vite dev\")",
+      "Bash(pkill -9 -f \"OceanMixer/node_modules/electron/dist\")",
+      "Bash(awk '{print $2, $11, $12, $13}')",
+      "Bash(pkill -9 -f \"OceanMixer/node_modules/electron\")",
+      "Bash(kill -9 59411)",
+      "Bash(ps -p 59411 -o pid=,comm=)",
+      "Bash(ps -A -o pid=,comm=)",
+      "Bash(node -e ' *)",
+      "Bash(/Users/matthewwhiteman/OceanMixer/node_modules/ffmpeg-static/ffmpeg -hide_banner -nostats -i '/Users/matthewwhiteman/Library/Application Support/OceanMixer/Cache/recordings/Recording_0_18.m4a' -af volumedetect -f null -)",
+      "Bash(ps -A -o pid=,ppid=,comm=)",
+      "Bash(grep -i \"OceanMixer$\")",
+      "Bash(sw_vers)"
+    ]
+  }
+}

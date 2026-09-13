@@ -1,6 +1,7 @@
-import { app, shell, BrowserWindow, session, Menu, nativeImage } from 'electron'
+import { app, shell, BrowserWindow, session, Menu, nativeImage, protocol, net } from 'electron'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { registerIpcHandlers } from './ipc'
 
 // Set the app name as early as possible so the macOS menu bar, About panel, and
@@ -8,6 +9,46 @@ import { registerIpcHandlers } from './ipc'
 // Packaged builds also get this from electron-builder's productName.
 app.setName('OceanMixer')
 if (process.platform === 'darwin') process.title = 'OceanMixer'
+
+// Local media is served through a privileged custom scheme rather than raw
+// file:// URLs. In dev the renderer is served from http://localhost, and a page
+// on an http(s) origin is not allowed to load file:// subresources (audio,
+// video, images) when webSecurity is on — media simply fails to load. A
+// registered scheme sidesteps that and works identically in packaged builds.
+// Must be called before app "ready".
+const MEDIA_SCHEME = 'oceanfile'
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: MEDIA_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true, // enables ranged requests so media can seek
+      bypassCSP: true,
+      corsEnabled: true
+    }
+  }
+])
+
+/** Stream a local file for `oceanfile://<absolute-path>` requests. */
+function registerMediaProtocol(): void {
+  protocol.handle(MEDIA_SCHEME, (request) => {
+    try {
+      // oceanfile:///Users/... -> pathname is the percent-encoded absolute path.
+      const filePath = decodeURIComponent(new URL(request.url).pathname)
+      // Forward the original method/headers (notably Range) so <audio>/<video>
+      // can seek via partial-content responses.
+      return net.fetch(pathToFileURL(filePath).toString(), {
+        method: request.method,
+        headers: request.headers
+      })
+    } catch (err) {
+      console.warn('[media] failed to serve', request.url, (err as Error).message)
+      return new Response('Not found', { status: 404 })
+    }
+  })
+}
 
 const isDev = !!process.env['ELECTRON_RENDERER_URL']
 
@@ -104,8 +145,10 @@ app.whenReady().then(() => {
     return permission === 'media'
   })
 
-  // Local media files are loaded via custom protocol / file paths; register
-  // all IPC handlers before any window can call them.
+  // Serve local media over the privileged oceanfile:// scheme.
+  registerMediaProtocol()
+
+  // Register all IPC handlers before any window can call them.
   registerIpcHandlers()
 
   createWindow()

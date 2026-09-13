@@ -131,7 +131,6 @@ export class PreviewCompositor {
     if (clip.type === 'audio') {
       const audio = document.createElement('audio')
       audio.preload = 'auto'
-      audio.crossOrigin = 'anonymous'
       audio.src = src
       audio.style.display = 'none'
       const dec: Decoder = {
@@ -154,9 +153,11 @@ export class PreviewCompositor {
     }
 
     // video
+    // No crossOrigin: the oceanfile:// responses aren't CORS-approved, so an
+    // 'anonymous' request would fail to load. We only draw frames to the preview
+    // canvas (never read pixels back), so a tainted canvas is fine.
     const video = document.createElement('video')
     video.preload = 'auto'
-    video.crossOrigin = 'anonymous'
     video.muted = false
     video.playsInline = true
     video.src = src

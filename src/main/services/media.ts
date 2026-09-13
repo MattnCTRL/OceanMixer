@@ -18,7 +18,7 @@ import * as crypto from 'node:crypto'
 
 import { ffmpegPath, ffprobePath } from './ffmpeg/binaries'
 import { run, runChecked } from './ffmpeg/run'
-import { getCacheDir } from './settings'
+import { getCacheDir, getRecordingsDir } from './settings'
 import type { MediaAsset, MediaType } from '@shared/types'
 import { newId } from '@shared/project-utils'
 import { IPC } from '@shared/ipc'
@@ -367,7 +367,8 @@ export async function saveRecording(
   name?: string
 ): Promise<MediaAsset> {
   const safeExt = (ext || 'webm').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'webm'
-  const dir = path.join(getCacheDir(), 'recordings')
+  // Durable location — NOT the cache dir (Chromium wipes that; see getRecordingsDir).
+  const dir = getRecordingsDir()
   fs.mkdirSync(dir, { recursive: true })
 
   const base =
